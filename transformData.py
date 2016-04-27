@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-def transformToStorableFormat(spline_data, index_data, coadd_id):
+def transformToStorableFormat(spline_data, index_data):
 
     """ Uncompress the sparse representation
     """
@@ -34,7 +34,7 @@ def getPDFinNumpyArray(data):
 def getPandasDataFrame(compress_list, compress_idx, data):
 
     compr_pdf = pd.DataFrame()
-    compr_pdf['COADD_OBJECTS_ID'] = np.array(data['COADD_OBJECTS_ID'])
+    #compr_pdf['COADD_OBJECTS_ID'] = np.array(data['COADD_OBJECTS_ID'])
     compr_pdf['PDF_compressed'] = np.array(compress_list)
     compr_pdf['compression_info_1'] = np.array(compress_idx, dtype='uint8')[:, 0]
     compr_pdf['compression_info_2'] = np.array(compress_idx, dtype='uint8')[:, 1]
@@ -51,6 +51,19 @@ def convertArrayPDFtoPandasCompressedPDF(data, compressed_pdf, coadd_id):
 
     """
 
-    compress_list, compress_idx = transformToStorableFormat(compressed_pdf[0], compressed_pdf[1], coadd_id)
+    compress_list, compress_idx = transformToStorableFormat(compressed_pdf[0], compressed_pdf[1])
     pandas_data_frame = getPandasDataFrame(compress_list, compress_idx, data)
+    #pandas_data_frame['COADD_OBJECTS_ID'] = coadd_id
     return pandas_data_frame
+
+
+def addCoaddID(compr_data, Coaddchunk):
+    """
+    compr_data: pdDataFrame
+    Coaddchunk: pdDataFrame
+
+    """
+
+
+
+

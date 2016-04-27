@@ -5,8 +5,7 @@
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline as spl
 from setup import zlim
-from HDF5manager import HDF5Store
-from setup import default_chunck
+from HDF5manager import ChunkedHDF5Store
 from transformData import getPDFinNumpyArray
 from transformData import convertArrayPDFtoPandasCompressedPDF
 from HDF5manager import readUncompressedPDF
@@ -19,12 +18,15 @@ class SplineCompression(object):
         self.thresh = thresh
 
     def compress(self, file_in, file_out):
-        HDFin = readUncompressedPDF(file_in, default_chunck)
-        HDFout = HDF5Store(file_out)
-        for el in HDFin:
-            pdf_array, coadd_id = getPDFinNumpyArray(el)
+        inPDF = readUncompressedPDF(file_in)
+        HDFout = ChunkedHDF5Store(file_out)
+        for PDFchunk in inPDF:
+            pdf_array, coadd_id = getPDFinNumpyArray(PDFchunk)
+            #print type(pdf_array)
+            pdf_array = np.array(pdf_array, dtype='float16')
             compressed_pdf = self.perform_compression(pdf_array)
-            compr_data = convertArrayPDFtoPandasCompressedPDF(el, compressed_pdf, coadd_id)
+            compr_data = convertArrayPDFtoPandasCompressedPDF(PDFchunk, compressed_pdf, coadd_id)
+            #print compr_data['PDF_compressed'].dtypes
             HDFout.storeCompressedChunk(compr_data)
 
     def perform_compression(self, data):
@@ -40,7 +42,8 @@ class SplineCompression(object):
 
             if len(index_over) < 2:
                 print len(index_over)
-                raise ValueError('The grid spacing is too big. This can happen for instance if the PDF resembles a delta function.')
+                #raise ValueError('The grid spacing is too big. This can happen for instance if the PDF resembles a delta function.')
+                continue
 
             try:
                 index_array = np.append(index_array,
@@ -50,4 +53,6 @@ class SplineCompression(object):
                 print e.message
             data_over = np.array(int_zw[index_over[0]:index_over[-1]])
             simple_spline = np.append(simple_spline, data_over)
+            simple_spline = np.array(simple_spline, dtype='float16')
+            index_array = np.array(index_array, dtype='uint8')
         return simple_spline, index_array

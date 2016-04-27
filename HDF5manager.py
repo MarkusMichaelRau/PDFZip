@@ -1,19 +1,24 @@
 import pandas as pd
 
-
+_chunksize = 10000
 pdfkey = 'pdf'
+pointpredkey = 'pointpred'
 
 
-def readUncompressedPDF(fname, chunksize):
-    return pd.read_hdf(fname, pdfkey, chunksize=chunksize)
+def readUncompressedPDF(fname):
+    return pd.read_hdf(fname, pdfkey, chunksize=_chunksize)
+
+
+def readAdditionalFields(fname):
+    return pd.read_hdf(fname, pointpredkey, chunksize=_chunksize)
 
 
 def writeUncompressedPDF(fout, pdDataFrame):
-    pdDataFrame.to_hdf(fout, 'pdf', format='table')
+    pdDataFrame.to_hdf(fout, 'pdf', format='table', complevel=5, complib='blosc:snappy')
 
 
 #TODO: Design the class such that it can
-class HDF5Read(object):
+class ChunkedHDF5Read(object):
     def __init__(self, fin):
         self.fin = fin
         self.chunklog = 0
@@ -27,11 +32,11 @@ class HDF5Read(object):
             return False
 
 
-class HDF5Store(object):
+class ChunkedHDF5Store(object):
     def __init__(self, fout):
         self.fout = fout
         self.chunklog = 0
 
     def storeCompressedChunk(self, pdDataFrame):
         self.chunklog += 1
-        pdDataFrame.to_hdf(self.fout, pdfkey+str(self.chunklog), format='fixed')
+        pdDataFrame.to_hdf(self.fout, pdfkey+str(self.chunklog), format='fixed', complevel=5, complib='blosc')
